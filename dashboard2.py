@@ -396,7 +396,7 @@ def main():
             st.metric("📄 Pending Payables", f"AED {pending_payables:,.0f}")
 
         with col4:
-        st.metric("💰 Cash Available for Withdrawal", f"AED {cash_available_for_withdrawal:,.0f}",
+            st.metric("💰 Cash Available for Withdrawal", f"AED {cash_available_for_withdrawal:,.0f}",
                     help="Formula: Opening Bank + Cash Profit − Payables − Reserve")
 
 
