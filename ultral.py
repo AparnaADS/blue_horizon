@@ -552,8 +552,8 @@ def summarize_orders(records: List[Dict], amount_field: str) -> Dict[str, float]
 # MAIN STREAMLIT APP
 # -----------------------------
 def main():
-    st.set_page_config(page_title="Zoho Reports Dashboard", page_icon="📊", layout="wide")
-    st.title("📊 Zoho Books – Financial Dashboard")
+    st.set_page_config(page_title="Ultraleap FZC – Financial Dashboard", page_icon="📊", layout="wide")
+    st.title("📊 Ultraleap FZC – Financial Dashboard")
     st.caption("Reports powered by Zoho Books core APIs + Profit & Loss / Balance Sheet reports.")
 
     cfg = load_zoho_settings()
