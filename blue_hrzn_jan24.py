@@ -439,12 +439,16 @@ def main():
         ap_total,
         min_reserve,
     )
+    cash_available_value = cash_available_info["cash_available"]
+    cash_available_label = "💰 Cash Available for Withdrawal"
+    if cash_available_value < 0:
+        cash_available_label = "🚨 Cash Shortage"
 
     mc1, mc2, mc3, mc4 = st.columns(4)
     mc1.metric("💵 Cash Net Profit", f"AED {cash_available_info['cash_profit']:,.1f}")
     mc2.metric("📉 Accounts Payable", f"AED {cash_available_info['ap_total']:,.1f}")
     mc3.metric("🔒 Minimum Reserve", f"AED {cash_available_info['min_reserve']:,.1f}")
-    mc4.metric("💰 Cash Available", f"AED {cash_available_info['cash_available']:,.1f}",
+    mc4.metric(cash_available_label, f"AED {cash_available_value:,.1f}",
                help="Cash Net Profit − AP − Minimum Reserve")
 
     with st.expander("💡 View Calculation Details"):
@@ -462,6 +466,8 @@ def main():
     st.markdown("---")
     b1, b2 = st.columns(2)
     wc_bank_total = 0.0
+    wc_bank_nbf_sum = 0.0
+    wc_cash_balance = 0.0
     with b1:
         st.subheader("🏦 Bank Accounts")
         st.caption(f"As of {to_date.strftime('%B %d, %Y')}")
@@ -476,16 +482,35 @@ def main():
                   .fillna(0)
                   .sum()
             )
+            # Working capital wants Bank Balance as NBF AED + NBF USD (no conversion),
+            # and Cash Balance as Petty Cash + those two.
+            name_map = bank_df.copy()
+            name_map["__lname"] = name_map["Account Name"].astype(str).str.strip().str.lower()
+            name_map["__amt"] = pd.to_numeric(name_map["Balance (AED)"], errors="coerce").fillna(0)
+            wc_bank_nbf_sum = (
+                name_map.loc[
+                    name_map["__lname"].isin(["bank - nbf aed", "bank - nbf usd"]),
+                    "__amt"
+                ].sum()
+            )
+            wc_cash_balance = (
+                name_map.loc[
+                    name_map["__lname"].isin(["petty cash", "bank - nbf aed", "bank - nbf usd"]),
+                    "__amt"
+                ].sum()
+            )
         else:
             st.warning("No bank account data available.")
             wc_bank_total = 0.0
+            wc_bank_nbf_sum = 0.0
+            wc_cash_balance = 0.0
 
     with b2:
         st.subheader("💼 Working Capital")
         wc = pd.DataFrame({
-            "Component": ["Bank Balance", "Accounts Receivable", "Prepaid Expenses", "Accounts Payable"],
-            "Amount (AED)": [wc_bank_total, ar_total, prepaid_total, -ap_total],
-            "Type": ["Asset", "Asset", "Asset", "Liability"],
+            "Component": ["Bank Balance", "Cash Balance", "Accounts Receivable", "Prepaid Expenses", "Accounts Payable"],
+            "Amount (AED)": [wc_bank_nbf_sum, wc_cash_balance, ar_total, prepaid_total, -ap_total],
+            "Type": ["Asset", "Asset", "Asset", "Asset", "Liability"],
         })
         st.dataframe(wc, use_container_width=True, hide_index=True)
         colors = ["#2E8B57" if x > 0 else "#DC143C" for x in wc["Amount (AED)"]]
